@@ -230,7 +230,7 @@ class LocaleTransfer(object):
 
 
 if __name__ == "__main__":
-    PROJECT_ROOT = "../../FineReport/SVN/code/project/"
+    PROJECT_ROOT = "../../../FineReport/SVN/code/project/"
     TARGET_REL_PATH = "fservice/src/com/fr/fs/resources"
     LOG_PATH = "./"
     FS_LOCALE_NAME = "fs"
