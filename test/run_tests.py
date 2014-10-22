@@ -12,6 +12,9 @@
 # SOFTWARE.
 # =============================================================================
 
-__all__ = ["run_tests"]
 
-from .run_tests import run_tests
+def run_tests():
+    pass
+
+if __name__ == "__main__":
+    run_tests()
