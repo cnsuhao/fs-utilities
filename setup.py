@@ -18,7 +18,8 @@ setup(
     license="MIT",
     keywords="FineReport platform utilities",
     url="https://github.com/FineDevelop/fs-utilities",
-    packages=["fs-utilities"],
+    packages=["fs-utilities",
+              "fs-utilities.transfer"],
     long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 1 - Planning",

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyleft (C) 2014 - FineReport, Inc.
+# Copyleft (C) 2014 - kyle <kyle@finereport.com>
 # =============================================================================
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -14,4 +14,5 @@
 
 __all__ = ["ImageTransfer", "LocaleTransfer"]
 
-from .transfer import ImageTransfer, LocaleTransfer
+from .image_transfer import ImageTransfer
+from .locale_transfer import LocaleTransfer

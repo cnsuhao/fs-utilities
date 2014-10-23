@@ -2,20 +2,24 @@
 FineReport Service Utilities
 ############################
 
-.. image:: https://travis-ci.org/FineDevelop/fs-utilities.svg?branch=master
+.. image:: https://img.shields.io/travis/FineDevelop/fs-utilities.svg?branch=master&style=flat
     :target: https://travis-ci.org/FineDevelop/fs-utilities
 
-.. image:: https://coveralls.io/repos/FineDevelop/fs-utilities/badge.png?branch=master
+.. image:: https://img.shields.io/coveralls/FineDevelop/fs-utilities.svg?branch=master&style=flat
     :target: https://coveralls.io/r/FineDevelop/fs-utilities?branch=master
 
 .. image:: https://readthedocs.org/projects/fs-utilities/badge/?version=latest
     :target: http://fs-utilities.readthedocs.org/en/latest/
 
-.. image:: https://img.shields.io/:license-mit-blue.svg
+.. image:: https://img.shields.io/badge/license-MIT-blue.svg?style=flat
     :target: http://badges.mit-license.org/
 
-.. image:: https://reposs.herokuapp.com/?path=FineDevelop/fs-utilities
+.. image:: https://reposs.herokuapp.com/?path=FineDevelop/fs-utilities&style=flat
     :target: https://github.com/FineDevelop/fs-utilities
+
+.. image:: https://http://img.shields.io/badge/FineReport-code-orange.svg?style=flat
+    :target: http://review.finedevelop.com:8999/
+
 
 Introduction
 ============

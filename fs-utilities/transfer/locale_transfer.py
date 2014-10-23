@@ -14,14 +14,33 @@
 
 __author__ = 'kyle'
 
-import glob
 import os
 import re
 
+from .transfer_base import TransferBase
 
-class LocaleTransfer(object):
-    """
 
+class LocaleTransfer(TransferBase):
+    u"""
+    国际化文本迁移工具
+
+    本工具用于国际化内容的模块间迁移，减少在分离模块后跨模块的国际化调用，减少模块间不必要的依赖。
+
+    .. note:: `LocaleTransfer`是
+        `~fs-utilities.transfer.transfer_base.TransferBase` 的子类。
+
+    :ivar list target_modules: 迁移国际化内容的目标模块列表
+    :ivar str target_locale_rel_path: 目标模块国际化资源文件到根目录的相对路径
+    :ivar str target_locale_name: 目标模块国际化资源文件名，如`fr`
+    :ivar str project_root: 工程文件的根目录(`project`目录)
+    :ivar str log_path: 输出信息的位置
+    :ivar list exclude_dirs: `project`下需要排除的子目录
+
+    :ivar dict all_locales: 缓存的国际化
+    :ivar list move_keys: 需要移动的国际化列表
+    :ivar list duplicate_keys: 模块共用的国际化列表
+    :ivar list fragmented_keys: 不完整的国际化列表
+    :ivar tuple locale_files: 缓存的国际化文件路径
     """
     __main_locale_tag = "main"
     __eol = "\n"
@@ -35,8 +54,8 @@ class LocaleTransfer(object):
     target_modules = []
     target_locale_rel_path = ""
     target_locale_name = ""
-    project_root = "./"
     log_path = "./"
+    exclude_dirs = []
 
     all_locales = {}
     move_keys = []
@@ -45,19 +64,45 @@ class LocaleTransfer(object):
     locale_files = ()
 
     def __init__(self, root, modules, target_rel_path, target_locale,
-                 log_path="./"):
-        self.project_root = root
+                 log_path="./", exclude_dirs=None):
+        u"""
+        对国际化文本迁移工具初始化
+
+        :param root: 工程文件的根目录(`project`目录)
+        :type root: str
+        :param modules: 迁移国际化内容的目标模块列表
+        :type modules: list
+        :param target_rel_path: 目标模块国际化资源文件到根目录的相对路径
+        :type target_rel_path: str
+        :param target_locale: 目标模块国际化资源文件名，如`fr`
+        :type target_locale: str
+        :param log_path: 输出信息的位置
+        :type log_path: str
+        :param exclude_dirs: `project`下需要排除的子目录
+        :type exclude_dirs: list
+        """
+        super(LocaleTransfer, self).__init__(root)
         self.target_modules = modules
         self.target_locale_rel_path = target_rel_path
         self.target_locale_name = target_locale
         self.log_path = log_path
-        # initialize locale data from source file
-        self.load_all_locale()
-        self.load_locale_files()
-        self.filter_locale_keys()
+        if exclude_dirs is not None:
+            self.exclude_dirs = exclude_dirs
+        # 从国际化资源文件初始化数据
+        self._load_all_locale()
+        self._load_locale_files()
+        self._filter_locale_keys()
 
     @staticmethod
     def get_source_locale_keys(src_file):
+        u"""
+        取出当前代码中的所有国际化查询键
+
+        :param src_file: 代码文件路径
+        :type src_file: str
+        :return: 当前代码中的所有国际化查询键
+        :rtype: dict
+        """
         locale_keys = []
         with open(src_file) as src:
             codes = src.readlines()
@@ -68,16 +113,37 @@ class LocaleTransfer(object):
                     'FR\.i18nText\("(.+?)"\)', line))
         return locale_keys
 
-    def get_locale_filename(self, base, locale=None):
+    def _get_locale_filename(self, base, locale=None):
+        u"""
+        生成国际化资源文件名
+
+        :param base: 国际化主资源文件名
+        :type base: str
+        :param locale: 本地化标识
+        :type locale： str
+        :return: 国际化资源文件名
+        """
         if locale is not None:
             filename = base + "_" + locale + self._locale_suffix
         else:
             filename = base + self._locale_suffix
         return filename
 
-    def load_locale_map(self, path, base, locale=None):
+    def _load_locale_map(self, path, base, locale=None):
+        u"""
+        读取指定国际化文件中的键值映射
+
+        :param path: 国际化资源文件在工程文件中的相对路径
+        :type path: str
+        :param base: 国际化主资源文件名
+        :type base: str
+        :param locale: 本地化标识
+        :type locale： str
+        :return: 国际化键值映射
+        :rtype: dict
+        """
         locale_map = {}
-        filename = self.get_locale_filename(base, locale)
+        filename = self._get_locale_filename(base, locale)
         with open(os.path.join(path, filename)) as loc:
             lines = loc.readlines()
             for line in lines:
@@ -88,70 +154,73 @@ class LocaleTransfer(object):
                 locale_map[k] = v.strip('\n')
         return locale_map
 
-    def load_all_locale(self):
+    def _load_all_locale(self):
+        u"""
+        读取并缓存所有原国际化文件中的国际化内容
+        """
         all_locales = {}
         old_locale_path = os.path.join(
             self.project_root, self._original_locale_rel_path)
-        for k, v in self.load_locale_map(
+        # 默认国际化文件中的内容
+        for k, v in self._load_locale_map(
                 old_locale_path, self._original_locale_name
         ).iteritems():
             all_locales[k] = {self.__main_locale_tag: v}
+        # 本地化的文件内容
         for locale in self._locales:
-            for k, v in self.load_locale_map(
+            for k, v in self._load_locale_map(
                     old_locale_path, self._original_locale_name, locale
             ).iteritems():
                 all_locales[k][locale] = v
         self.all_locales = all_locales
 
-    def get_module_files(self, module):
-        src_files = []
-        module_path = os.path.join(self.project_root, module)
-        for root, dirs, files in os.walk(module_path):
-            for d in dirs:
-                if ".svn" in d:
-                    continue
-                file_path = lambda rel_path: os.path.join(root, d, rel_path)
-                for pattern in self._source_pattern:
-                    # filter source code
-                    files = glob.glob(file_path(pattern))
-                    for src_file in files:
-                        src_files.append(src_file)
-        return src_files
-
-    def filter_locale_keys(self):
+    def _filter_locale_keys(self):
+        u"""
+        取出需要处理的国际化信息
+        """
         module_keys = []
         exclude_keys = []
         module_files = []
         exclude_files = []
-        # collect i18n files
+        # 收集代码文件路径
         for module in self.target_modules:
             module_files.extend(self.get_module_files(module))
         for module in os.listdir(self.project_root):
+            if module in self.exclude_dirs:
+                continue
             if module not in self.target_modules:
                 exclude_files.extend(self.get_module_files(module))
-        # search i18n keys
+        # 搜索国际化查询键
         for src in module_files:
             module_keys.extend(
                 self.get_source_locale_keys(os.path.abspath(src)))
         for src in exclude_files:
             exclude_keys.extend(
                 self.get_source_locale_keys(os.path.abspath(src)))
-        # distinct
+        # 去重
         module_keys = set(module_keys)
         exclude_keys = set(exclude_keys)
-        # filter keys
+        # 取出需要移动、模块共用的国际化查询键
         move_keys = module_keys - exclude_keys
         move_keys = list(set(self.all_locales.keys()) & move_keys)
         duplicate_keys = list(module_keys & exclude_keys)
         move_keys.sort()
         duplicate_keys.sort()
-        # fragmented keys
+        # 不完整的国际化内容
         for k in move_keys:
-            if not self.check_locale_complete(k):
+            if not self._check_locale_complete(k):
                 self.fragmented_keys.append(k)
         self.move_keys, self.duplicate_keys = move_keys, duplicate_keys
 
-    def check_locale_complete(self, key):
+    def _check_locale_complete(self, key):
+        u"""
+        按键检查国际化字符串是否完整
+
+        :param key: 查询键
+        :type key： str
+        :return: 国际化字符串是否完整
+        :rtype: bool
+        """
         locale = self.all_locales[key]
         if len(locale) < 5:
             return False
@@ -161,68 +230,88 @@ class LocaleTransfer(object):
         return True
 
     def transfer(self):
+        u"""
+        移动国际化文本
+        """
         original, target = self.locale_files
-        # remove from original
+        # 移除模块独立的国际化内容
         for path in original.values():
             with open(path, "r") as f:
                 lines = f.readlines()
             with open(path, "w") as f:
                 for line in lines:
                     k = line.split("=", 1)
+                    # 跳过无关行
                     if len(k) < 2:
                         f.write(line)
                         continue
                     k = tuple(k)[0]
+                    # 删除行
                     if k not in self.move_keys:
                         f.write(line)
-        # append to target
+        # 将移动的国际化内容增加到目标模块
         for locale, path in target.iteritems():
             with open(path, "r+") as f:
                 add_keys = self.move_keys
                 lines = f.readlines()
                 for line in lines:
                     k = line.split("=", 1)
+                    # 跳过无关行
                     if len(k) < 2:
                         continue
                     k = tuple(k)[0]
+                    # 去重
                     if k in self.move_keys:
                         add_keys.remove(k)
+                # 追加
                 for k in add_keys:
                     line_buffer = [
                         k, "=", self.all_locales[k][locale], self.__eol]
                     f.write("".join(line_buffer))
-        self.dump_warning()
 
-    def load_locale_files(self):
-        # original locale
+    def _load_locale_files(self):
+        u"""
+        加载国际化资源文件路径
+        """
+        # 源国际化资源文件
         original_path = os.path.join(
             self.project_root, self._original_locale_rel_path)
+        # 默认的国际化文件
         original_main = os.path.join(
-            original_path, self.get_locale_filename(self._original_locale_name))
+            original_path, self._get_locale_filename(self._original_locale_name)
+        )
         original_files = {self.__main_locale_tag: original_main}
+        # 本地化的国际化文件
         for locale in self._locales:
             original_locale_file = os.path.join(
                 original_path,
-                self.get_locale_filename(self._original_locale_name, locale))
+                self._get_locale_filename(self._original_locale_name, locale))
             original_files[locale] = original_locale_file
-        # target locale
+        # 目标国际化资源文件
         target_path = os.path.join(
             self.project_root, self.target_locale_rel_path)
+        # 默认的国际化文件
         target_main = os.path.join(
-            target_path, self.get_locale_filename(self.target_locale_name))
+            target_path, self._get_locale_filename(self.target_locale_name))
         target_files = {self.__main_locale_tag: target_main}
+        # 本地化的国际化文件
         for locale in self._locales:
             target_locale_file = os.path.join(
                 target_path,
-                self.get_locale_filename(self.target_locale_name, locale))
+                self._get_locale_filename(self.target_locale_name, locale))
             target_files[locale] = target_locale_file
         self.locale_files = (original_files, target_files)
 
     def dump_warning(self):
+        u"""
+        输出需要注意的国际化内容
+        """
+        # 目标模块与其他模块共用的内容
         dup_file = os.path.join(self.log_path, "duplicate.txt")
         with open(dup_file, "w+") as f:
             for k in self.duplicate_keys:
                 f.write(k + self.__eol)
+        # 本地化不完整的内容
         frag_file = os.path.join(self.log_path, "fragmented.txt")
         with open(frag_file, "w+") as f:
             for k in self.fragmented_keys:
@@ -230,12 +319,14 @@ class LocaleTransfer(object):
 
 
 if __name__ == "__main__":
-    PROJECT_ROOT = "../../../FineReport/SVN/code/project/"
+    PROJECT_ROOT = "../../FineReport/SVN/code/project/"
     TARGET_REL_PATH = "fservice/src/com/fr/fs/resources"
     LOG_PATH = "./"
     FS_LOCALE_NAME = "fs"
-    FS_MODULES = ["fschedule", "fservice", "fprocess", "fmobile"]
+    FS_MODULES = ["fschedule", "fservice", "fmobile"]
+    EXCLUDE_DIRS = ["out", ".svn"]
 
     trans = LocaleTransfer(PROJECT_ROOT, FS_MODULES, TARGET_REL_PATH,
-                           FS_LOCALE_NAME, LOG_PATH)
+                           FS_LOCALE_NAME, LOG_PATH, EXCLUDE_DIRS)
     trans.transfer()
+    trans.dump_warning()
