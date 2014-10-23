@@ -17,7 +17,7 @@ FineReport Service Utilities
 .. image:: https://reposs.herokuapp.com/?path=FineDevelop/fs-utilities&style=flat
     :target: https://github.com/FineDevelop/fs-utilities
 
-.. image:: https://http://img.shields.io/badge/FineReport-code-orange.svg?style=flat
+.. image:: https://img.shields.io/badge/FineReport-code-orange.svg?style=flat
     :target: http://review.finedevelop.com:8999/
 
 

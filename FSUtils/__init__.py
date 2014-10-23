@@ -12,6 +12,6 @@
 # SOFTWARE.
 # =============================================================================
 
-__all__ = ["ImageTransfer", "LocaleTransfer"]
+__all__ = ["transfer"]
 
-from .transfer import ImageTransfer, LocaleTransfer
+import transfer

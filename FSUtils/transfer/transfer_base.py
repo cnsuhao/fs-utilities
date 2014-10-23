@@ -19,7 +19,7 @@ import os
 
 
 class TransferBase(object):
-    _source_pattern = ["*.*"]
+    source_pattern = ["*.*"]
     project_root = "./"
 
     def __init__(self, root):
@@ -39,7 +39,7 @@ class TransferBase(object):
                 if ".svn" in d:
                     continue
                 file_path = lambda rel_path: os.path.join(root, d, rel_path)
-                for pattern in self._source_pattern:
+                for pattern in self.source_pattern:
                     # filter source code
                     files = glob.glob(file_path(pattern))
                     for src_file in files:

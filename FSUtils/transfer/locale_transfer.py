@@ -26,15 +26,21 @@ class LocaleTransfer(TransferBase):
 
     本工具用于国际化内容的模块间迁移，减少在分离模块后跨模块的国际化调用，减少模块间不必要的依赖。
 
-    .. note:: `LocaleTransfer`是
-        `~fs-utilities.transfer.transfer_base.TransferBase` 的子类。
+    .. note:: `LocaleTransfer` 是
+        :class:`~fs-utilities.transfer.transfer_base.TransferBase` 的子类。
+
+    :ivar list locales: 支持的国际化标识符
+    :ivar str locale_suffix: 国际化资源文件扩展名
+    :ivar list source_pattern: 代码文件类型的通配符列表
+    :ivar str original_locale_rel_path: 源国际化资源文件到根目录的相对路径
+    :ivar str original_locale_name: 源国际化资源文件名，如"fr"
 
     :ivar list target_modules: 迁移国际化内容的目标模块列表
     :ivar str target_locale_rel_path: 目标模块国际化资源文件到根目录的相对路径
-    :ivar str target_locale_name: 目标模块国际化资源文件名，如`fr`
-    :ivar str project_root: 工程文件的根目录(`project`目录)
+    :ivar str target_locale_name: 目标模块国际化资源文件名，如"fr"
+    :ivar str project_root: 工程文件的根目录("project"目录)
     :ivar str log_path: 输出信息的位置
-    :ivar list exclude_dirs: `project`下需要排除的子目录
+    :ivar list exclude_dirs: "project"下需要排除的子目录
 
     :ivar dict all_locales: 缓存的国际化
     :ivar list move_keys: 需要移动的国际化列表
@@ -45,11 +51,11 @@ class LocaleTransfer(TransferBase):
     __main_locale_tag = "main"
     __eol = "\n"
 
-    _locales = ["en_US", "zh_CN", "zh_TW", "ja_JP"]
-    _locale_suffix = ".properties"
-    _source_pattern = ["*.java", "*.js"]
-    _original_locale_rel_path = "base-file/src/com/fr/general/locale"
-    _original_locale_name = "fr"
+    locales = ["en_US", "zh_CN", "zh_TW", "ja_JP"]
+    locale_suffix = ".properties"
+    source_pattern = ["*.java", "*.js"]
+    original_locale_rel_path = "base-file/src/com/fr/general/locale"
+    original_locale_name = "fr"
 
     target_modules = []
     target_locale_rel_path = ""
@@ -68,7 +74,7 @@ class LocaleTransfer(TransferBase):
         u"""
         对国际化文本迁移工具初始化
 
-        :param root: 工程文件的根目录(`project`目录)
+        :param root: 工程文件的根目录("project"目录)
         :type root: str
         :param modules: 迁移国际化内容的目标模块列表
         :type modules: list
@@ -78,7 +84,7 @@ class LocaleTransfer(TransferBase):
         :type target_locale: str
         :param log_path: 输出信息的位置
         :type log_path: str
-        :param exclude_dirs: `project`下需要排除的子目录
+        :param exclude_dirs: "project"下需要排除的子目录
         :type exclude_dirs: list
         """
         super(LocaleTransfer, self).__init__(root)
@@ -120,13 +126,14 @@ class LocaleTransfer(TransferBase):
         :param base: 国际化主资源文件名
         :type base: str
         :param locale: 本地化标识
-        :type locale： str
+        :type locale: str
         :return: 国际化资源文件名
+        :rtype: str
         """
         if locale is not None:
-            filename = base + "_" + locale + self._locale_suffix
+            filename = base + "_" + locale + self.locale_suffix
         else:
-            filename = base + self._locale_suffix
+            filename = base + self.locale_suffix
         return filename
 
     def _load_locale_map(self, path, base, locale=None):
@@ -138,7 +145,7 @@ class LocaleTransfer(TransferBase):
         :param base: 国际化主资源文件名
         :type base: str
         :param locale: 本地化标识
-        :type locale： str
+        :type locale: str
         :return: 国际化键值映射
         :rtype: dict
         """
@@ -160,16 +167,16 @@ class LocaleTransfer(TransferBase):
         """
         all_locales = {}
         old_locale_path = os.path.join(
-            self.project_root, self._original_locale_rel_path)
+            self.project_root, self.original_locale_rel_path)
         # 默认国际化文件中的内容
         for k, v in self._load_locale_map(
-                old_locale_path, self._original_locale_name
+                old_locale_path, self.original_locale_name
         ).iteritems():
             all_locales[k] = {self.__main_locale_tag: v}
         # 本地化的文件内容
-        for locale in self._locales:
+        for locale in self.locales:
             for k, v in self._load_locale_map(
-                    old_locale_path, self._original_locale_name, locale
+                    old_locale_path, self.original_locale_name, locale
             ).iteritems():
                 all_locales[k][locale] = v
         self.all_locales = all_locales
@@ -217,7 +224,7 @@ class LocaleTransfer(TransferBase):
         按键检查国际化字符串是否完整
 
         :param key: 查询键
-        :type key： str
+        :type key: str
         :return: 国际化字符串是否完整
         :rtype: bool
         """
@@ -275,17 +282,17 @@ class LocaleTransfer(TransferBase):
         """
         # 源国际化资源文件
         original_path = os.path.join(
-            self.project_root, self._original_locale_rel_path)
+            self.project_root, self.original_locale_rel_path)
         # 默认的国际化文件
         original_main = os.path.join(
-            original_path, self._get_locale_filename(self._original_locale_name)
+            original_path, self._get_locale_filename(self.original_locale_name)
         )
         original_files = {self.__main_locale_tag: original_main}
         # 本地化的国际化文件
-        for locale in self._locales:
+        for locale in self.locales:
             original_locale_file = os.path.join(
                 original_path,
-                self._get_locale_filename(self._original_locale_name, locale))
+                self._get_locale_filename(self.original_locale_name, locale))
             original_files[locale] = original_locale_file
         # 目标国际化资源文件
         target_path = os.path.join(
@@ -295,7 +302,7 @@ class LocaleTransfer(TransferBase):
             target_path, self._get_locale_filename(self.target_locale_name))
         target_files = {self.__main_locale_tag: target_main}
         # 本地化的国际化文件
-        for locale in self._locales:
+        for locale in self.locales:
             target_locale_file = os.path.join(
                 target_path,
                 self._get_locale_filename(self.target_locale_name, locale))

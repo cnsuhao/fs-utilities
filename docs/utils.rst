@@ -3,8 +3,8 @@
 
 国际化文本迁移工具
 ------------------
-
-.. autoclass:: fs-utilities.LocaleTransfer
+.. autoclass:: FSUtils.transfer.LocaleTransfer
     :members:
+    :private-members:
 
-    .. automethod:: fs-utilities.LocaleTransfer.__init__
+    .. automethod:: FSUtils.transfer.LocaleTransfer.__init__
