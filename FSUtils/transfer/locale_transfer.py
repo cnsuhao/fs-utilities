@@ -17,7 +17,7 @@ __author__ = 'kyle'
 import os
 import re
 
-from .transfer_base import TransferBase
+from transfer_base import TransferBase
 
 
 class LocaleTransfer(TransferBase):
@@ -35,12 +35,9 @@ class LocaleTransfer(TransferBase):
     :ivar str original_locale_rel_path: 源国际化资源文件到根目录的相对路径
     :ivar str original_locale_name: 源国际化资源文件名，如"fr"
 
-    :ivar list target_modules: 迁移国际化内容的目标模块列表
     :ivar str target_locale_rel_path: 目标模块国际化资源文件到根目录的相对路径
     :ivar str target_locale_name: 目标模块国际化资源文件名，如"fr"
-    :ivar str project_root: 工程文件的根目录("project"目录)
     :ivar str log_path: 输出信息的位置
-    :ivar list exclude_dirs: "project"下需要排除的子目录
 
     :ivar dict all_locales: 缓存的国际化
     :ivar list move_keys: 需要移动的国际化列表
@@ -57,11 +54,9 @@ class LocaleTransfer(TransferBase):
     original_locale_rel_path = "base-file/src/com/fr/general/locale"
     original_locale_name = "fr"
 
-    target_modules = []
     target_locale_rel_path = ""
     target_locale_name = ""
     log_path = "./"
-    exclude_dirs = []
 
     all_locales = {}
     move_keys = []
@@ -87,13 +82,10 @@ class LocaleTransfer(TransferBase):
         :param exclude_dirs: "project"下需要排除的子目录
         :type exclude_dirs: list
         """
-        super(LocaleTransfer, self).__init__(root)
-        self.target_modules = modules
+        super(LocaleTransfer, self).__init__(root, modules, exclude_dirs)
         self.target_locale_rel_path = target_rel_path
         self.target_locale_name = target_locale
         self.log_path = log_path
-        if exclude_dirs is not None:
-            self.exclude_dirs = exclude_dirs
         # 从国际化资源文件初始化数据
         self._load_all_locale()
         self._load_locale_files()
@@ -187,21 +179,13 @@ class LocaleTransfer(TransferBase):
         """
         module_keys = []
         exclude_keys = []
-        module_files = []
-        exclude_files = []
         # 收集代码文件路径
-        for module in self.target_modules:
-            module_files.extend(self.get_module_files(module))
-        for module in os.listdir(self.project_root):
-            if module in self.exclude_dirs:
-                continue
-            if module not in self.target_modules:
-                exclude_files.extend(self.get_module_files(module))
+        self.collect_source_files()
         # 搜索国际化查询键
-        for src in module_files:
+        for src in self._module_files:
             module_keys.extend(
                 self.get_source_locale_keys(os.path.abspath(src)))
-        for src in exclude_files:
+        for src in self._exclude_files:
             exclude_keys.extend(
                 self.get_source_locale_keys(os.path.abspath(src)))
         # 去重

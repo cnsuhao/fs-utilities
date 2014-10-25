@@ -19,11 +19,48 @@ import os
 
 
 class TransferBase(object):
-    source_pattern = ["*.*"]
-    project_root = "./"
+    u"""
+    :ivar list _module_files:
+    :ivar list _exclude_files:
+    :ivar list source_pattern: 代码文件类型的通配符列表
+    :ivar str project_root: 工程文件的根目录("project"目录)
+    :ivar list target_modules: 迁移国际化内容的目标模块列表
+    :ivar list exclude_dirs: "project"下需要排除的子目录
+    """
+    _module_files = []
+    _exclude_files = []
 
-    def __init__(self, root):
+    source_pattern = []
+    project_root = "./"
+    target_modules = []
+    exclude_dirs = ["out", ".svn", ".idea"]
+
+    def __init__(self, root, modules, exclude_dirs=None):
+        u"""
+
+        :param root: 工程文件的根目录("project"目录)
+        :type root: str
+        :param modules: 迁移国际化内容的目标模块列表
+        :type modules: list
+        :param exclude_dirs: "project"下需要排除的子目录
+        :type exclude_dirs: list
+        """
         self.project_root = root
+        self.target_modules = modules
+        if exclude_dirs is not None:
+            self.exclude_dirs = exclude_dirs
+
+    def collect_source_files(self):
+        u"""
+        收集代码文件路径
+        """
+        for module in self.target_modules:
+            self._module_files.extend(self.get_module_files(module))
+        for module in os.listdir(self.project_root):
+            if module in self.exclude_dirs:
+                continue
+            if module not in self.target_modules:
+                self._exclude_files.extend(self.get_module_files(module))
 
     def get_module_files(self, module):
         u"""
@@ -35,13 +72,12 @@ class TransferBase(object):
         src_files = []
         module_path = os.path.join(self.project_root, module)
         for root, dirs, files in os.walk(module_path):
+            if ".svn" in root:
+                continue
             for d in dirs:
-                if ".svn" in d:
-                    continue
-                file_path = lambda rel_path: os.path.join(root, d, rel_path)
+                file_path = lambda p: os.path.join(root, d, p)
                 for pattern in self.source_pattern:
-                    # filter source code
+                    # 检索代码文件
                     files = glob.glob(file_path(pattern))
-                    for src_file in files:
-                        src_files.append(src_file)
+                    src_files.extend(files)
         return src_files

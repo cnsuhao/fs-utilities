@@ -10,7 +10,7 @@ def read(filename):
 
 
 setup(
-    name="fs-utilities",
+    name="FSUtils",
     version="0.0.1",
     author="FineReport Inc.",
     description=("A simple package providing lightweight tools managing files "
@@ -18,8 +18,8 @@ setup(
     license="MIT",
     keywords="FineReport platform utilities",
     url="https://github.com/FineDevelop/fs-utilities",
-    packages=["fs-utilities",
-              "fs-utilities.transfer"],
+    packages=["FSUtils",
+              "FSUtils.transfer"],
     long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 1 - Planning",

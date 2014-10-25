@@ -9,7 +9,7 @@ FineReport Service Utilities
     :target: https://coveralls.io/r/FineDevelop/fs-utilities?branch=master
 
 .. image:: https://readthedocs.org/projects/fs-utilities/badge/?version=latest
-    :target: http://fs-utilities.readthedocs.org/en/latest/
+    :target: http://fs-utilities.readthedocs.org/zh_CN/latest/
 
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg?style=flat
     :target: http://badges.mit-license.org/
@@ -29,7 +29,7 @@ managing files from FineReport platform.
 
 License
 =======
-Python Database Connector is released under the terms of the MIT license.
+FineReport Service Utilities is released under the terms of the MIT license.
 
 The MIT License is simple and easy to understand and it places almost no
 restrictions on what you can do with `FineReport Service Utilities`.
