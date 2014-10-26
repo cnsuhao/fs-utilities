@@ -99,7 +99,7 @@ class LocaleTransfer(TransferBase):
         :param src_file: 代码文件路径
         :type src_file: str
         :return: 当前代码中的所有国际化查询键
-        :rtype: dict
+        :rtype: list
         """
         locale_keys = []
         with open(src_file) as src:
@@ -194,14 +194,14 @@ class LocaleTransfer(TransferBase):
         # 取出需要移动、模块共用的国际化查询键
         move_keys = module_keys - exclude_keys
         move_keys = list(set(self.all_locales.keys()) & move_keys)
-        duplicate_keys = list(module_keys & exclude_keys)
+        shared_keys = list(module_keys & exclude_keys)
         move_keys.sort()
-        duplicate_keys.sort()
+        shared_keys.sort()
         # 不完整的国际化内容
         for k in move_keys:
             if not self._check_locale_complete(k):
                 self.fragmented_keys.append(k)
-        self.move_keys, self.duplicate_keys = move_keys, duplicate_keys
+        self.move_keys, self.duplicate_keys = move_keys, shared_keys
 
     def _check_locale_complete(self, key):
         u"""
@@ -298,7 +298,7 @@ class LocaleTransfer(TransferBase):
         输出需要注意的国际化内容
         """
         # 目标模块与其他模块共用的内容
-        dup_file = os.path.join(self.log_path, "duplicate.txt")
+        dup_file = os.path.join(self.log_path, "shared.txt")
         with open(dup_file, "w+") as f:
             for k in self.duplicate_keys:
                 f.write(k + self.__eol)
