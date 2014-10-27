@@ -46,7 +46,6 @@ class LocaleTransfer(TransferBase):
     :ivar tuple locale_files: 缓存的国际化文件路径
     """
     __main_locale_tag = "main"
-    __eol = "\n"
 
     locales = ["en_US", "zh_CN", "zh_TW", "ja_JP"]
     locale_suffix = ".properties"
@@ -257,7 +256,7 @@ class LocaleTransfer(TransferBase):
                 # 追加
                 for k in add_keys:
                     line_buffer = [
-                        k, "=", self.all_locales[k][locale], self.__eol]
+                        k, "=", self.all_locales[k][locale], self._eol]
                     f.write("".join(line_buffer))
 
     def _load_locale_files(self):
@@ -301,12 +300,12 @@ class LocaleTransfer(TransferBase):
         dup_file = os.path.join(self.log_path, "shared.txt")
         with open(dup_file, "w+") as f:
             for k in self.duplicate_keys:
-                f.write(k + self.__eol)
+                f.write(k + self._eol)
         # 本地化不完整的内容
         frag_file = os.path.join(self.log_path, "fragmented.txt")
         with open(frag_file, "w+") as f:
             for k in self.fragmented_keys:
-                f.write(k + self.__eol)
+                f.write(k + self._eol)
 
 
 if __name__ == "__main__":

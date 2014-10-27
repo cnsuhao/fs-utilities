@@ -27,6 +27,9 @@ class TransferBase(object):
     :ivar list target_modules: 迁移国际化内容的目标模块列表
     :ivar list exclude_dirs: "project"下需要排除的子目录
     """
+    _eol = "\n"
+    _indent = " " * 4
+
     _module_files = []
     _exclude_files = []
 
