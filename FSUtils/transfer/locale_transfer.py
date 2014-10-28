@@ -64,7 +64,7 @@ class LocaleTransfer(TransferBase):
     locale_files = ()
 
     def __init__(self, root, modules, target_rel_path, target_locale,
-                 log_path="./", exclude_dirs=None):
+                 work_dir="./", exclude_dirs=None):
         u"""
         对国际化文本迁移工具初始化
 
@@ -76,15 +76,16 @@ class LocaleTransfer(TransferBase):
         :type target_rel_path: str
         :param target_locale: 目标模块国际化资源文件名，如`fr`
         :type target_locale: str
-        :param log_path: 输出信息的位置
-        :type log_path: str
+        :param work_dir: 输出信息的位置
+        :type work_dir: str
         :param exclude_dirs: "project"下需要排除的子目录
         :type exclude_dirs: list
         """
-        super(LocaleTransfer, self).__init__(root, modules, exclude_dirs)
+        super(LocaleTransfer, self).__init__(
+            root, modules, exclude_dirs=exclude_dirs, log_dir=work_dir)
         self.target_locale_rel_path = target_rel_path
         self.target_locale_name = target_locale
-        self.log_path = log_path
+        self.log_path = work_dir
         # 从国际化资源文件初始化数据
         self._load_all_locale()
         self._load_locale_files()
