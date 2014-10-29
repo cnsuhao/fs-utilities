@@ -1,6 +1,6 @@
-############################
-FineReport Service Utilities
-############################
+#########################
+FineReport 平台维护工具集
+#########################
 
 .. image:: https://img.shields.io/travis/FineDevelop/fs-utilities.svg?branch=master&style=flat
     :target: https://travis-ci.org/FineDevelop/fs-utilities
@@ -21,20 +21,17 @@ FineReport Service Utilities
     :target: http://review.finedevelop.com:8999/
 
 
-Introduction
-============
-`FineReport Service Utilities` is a simple package providing lightweight tools
-managing files from FineReport platform.
+简介
+====
+`FineReport Service Utilities` 是一个用于 FineReport 平台模块开发代码维护的轻量级工具集。
 
 
-License
-=======
-FineReport Service Utilities is released under the terms of the MIT license.
-
-The MIT License is simple and easy to understand and it places almost no
-restrictions on what you can do with `FineReport Service Utilities`.
+许可证
+======
+`FineReport Service Utilities` 使用 MIT 许可授权。被授权人有权利使用、复制、修改、合并、出
+版发布、散布、再授权和/或贩售软件及软件的副本，及授予被供应人同等权利。
 
 
-Author/Maintainer
-=================
+维护者
+======
 kyle `<kyle@finereport.com>`_

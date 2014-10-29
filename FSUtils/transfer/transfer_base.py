@@ -25,11 +25,12 @@ class TransferBase(object):
     :ivar list _exclude_files:
     :ivar
     :ivar list source_pattern: 代码文件类型的通配符列表
-    :ivar str project_root: 工程文件的根目录("project"目录)
+    :ivar str project_root: 工程文件的根目录( ``project`` 目录)
     :ivar list target_modules: 迁移国际化内容的目标模块列表
     :ivar list exclude_dirs: "project"下需要排除的子目录
     """
     _eol = "\n"
+    _src_dir = "src"
     _indent = " " * 4
 
     _module_files = []
@@ -46,11 +47,11 @@ class TransferBase(object):
                  log_dir=None, log_level=logging.INFO):
         u"""
 
-        :param root: 工程文件的根目录("project"目录)
+        :param root: 工程文件的根目录( ``project`` 目录)
         :type root: str
         :param modules: 迁移国际化内容的目标模块列表
         :type modules: list
-        :param exclude_dirs: "project"下需要排除的子目录
+        :param exclude_dirs: ``project`` 下需要排除的子目录
         :type exclude_dirs: list
         """
         self.project_root = root
@@ -92,7 +93,7 @@ class TransferBase(object):
         u"""
         获取模块中的所有代码文件
 
-        :param module: 模块包目录名称，如`base`
+        :param module: 模块包目录名称，如 ``base``
         :type module: str
         """
         src_files = []
@@ -107,6 +108,20 @@ class TransferBase(object):
                     files = glob.glob(file_path(pattern))
                     src_files.extend(files)
         return src_files
+
+    def clear_target_dirs(self):
+        u"""
+        清理目标模块中的空目录
+        """
+        for module in self.target_modules:
+            src_path = os.path.join(self.project_root, module, self._src_dir)
+            for root, dirs, files in os.walk(src_path, topdown=False):
+                if ".svn" in root:
+                    continue
+                for d in dirs:
+                    dir_path = os.path.join(root, d)
+                    if not os.listdir(dir_path):
+                        os.rmdir(dir_path)
 
     @staticmethod
     def reformat_path(path):

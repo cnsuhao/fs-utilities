@@ -25,9 +25,54 @@ from transfer_base import TransferBase
 
 class ImageTransfer(TransferBase):
     u"""
-    :ivar list source_pattern: 代码文件类型的通配符列表
+    图片文件迁移工具
+
+    可将目标模块依赖的所有图片文件迁移至指定目录，并自动替换所有代码中引用的图片路径。
+
+    .. caution:: 本工具目前不支持拼接调用的图片路径，相关路径需要使用
+        ``target_exclude_dirs`` 参数进行排除。
+
+    .. note:: `ImageTransfer` 是 :class:`~FSUtils.transfer.TransferBase` 的子类。
+
+    图片迁移工具调用方式：
+
+    .. code:: python
+
+        trans = ImageTransfer(
+            root="./project",
+            modules=["fschedule", "fservice", "fmobile"],
+            target_base="com/fr/fs",
+            target_excludes=["com/fr/fs/web/images/mobile/cover/"],
+            target_dir="./project/fservice/src/com/fr/fs/resources/images/",
+            log_dir="./log",
+            log_level=logging.INFO
+        )
+        trans.transfer()
+
+    :ivar list _module_dependencies: 目标模块依赖的图片索引列表，存储
+        ``{"代码相对路径": [代码引用的所有图片]}`` 构成的字典。
+    :ivar list _exclude_dependencies: 其余模块依赖的图片索引列表，存储
+        ``{"代码相对路径": [代码引用的所有图片]}`` 构成的字典。
+    :ivar set _module_images: 目标模块所用到的所有图片集合。
+    :ivar set _exclude_images: 其余模块所用到的所有图片集合。
+    :ivar dict _module_image_map: 目标模块中引用图片相对路径与绝对路径关系字典，key 为相对
+        路径。
+    :ivar list _module_in_use_images: 目标模块引用来自自身模块的图片列表。
+    :ivar list _module_unused_images: 目标模块中存储的未被自身使用的图片列表。
+    :ivar list _module_dependent_images: 目标模块引用的其他模块图片列表。
+    :ivar list _transferred_images: 经过迁移的图片列表，储存
+        ``(迁移前的调用相对路径， 迁移后的调用相对路径)`` 构成的元组。
+
+    :ivar list source_pattern: 代码文件类型的通配符列表，形如 ``["*.java", "*.js"]``
+    :ivar list img_pattern: 图片文件类型的通配符列表，形如 ``["*.jpg", "*.png"]``
+    :ivar str base_dir_pattern: 工程项目中使用的非第三方图片删选基准目录，默认为
+        ``com/fr`` 。
+    :ivar str target_dir_pattern: 目标模块图片基础引用相对路径，如平台模块使用
+        ``com/fr/fs`` 。此路径用于区分引用模块。
+    :ivar list target_exclude_dirs: 目标模块中需要排除的图片引用目录列表，用于排除对合成路
+        径的处理。
+    :ivar str target_dir: 迁移图片的目标路径。
     """
-    __src_dir = "src"
     _img_dir_sep = ["images", "web/core"]
 
     _module_dependencies = []
@@ -51,20 +96,26 @@ class ImageTransfer(TransferBase):
                  target_dir=None, exclude_dirs=None, log_dir=None,
                  log_level=logging.INFO):
         u"""
-        :param root: 工程文件的根目录(``project``目录)
+        初始化图片迁移工具
+
+        :param root: 工程文件的根目录( ``project`` 目录)
         :type root: str
-        :param modules: 迁移图片的目标模块列表
+        :param modules: 迁移图片的目标模块目录列表，如 ``["base", "base-data"]`` 。
         :type modules: list
-        :param target_base:
+        :param target_base: 目标模块图片基础引用相对路径，如平台模块使用 ``com/fr/fs`` 。
+            此路径用于区分引用模块。
         :type target_base: str
-        :param target_excludes:
+        :param target_excludes: 目标模块中需要排除的图片引用目录列表，用于排除对合成路径的
+            处理。
         :type target_excludes: list
-        :param target_dir: 输出路径
+        :param target_dir: 迁移图片的目标路径，不设置则使用当前工作目录。
         :type target_dir: str
-        :param exclude_dirs: ``project``下需要排除的子目录
+        :param exclude_dirs: ``project`` 下需要排除的子目录，不设置保留默认配置。
         :type exclude_dirs: list
-        :param log_dir:
+        :param log_dir: 日志文件输出路径
         :type log_dir: str
+        :param log_level: 日志记录等级
+        :type log_level: int
         """
         super(ImageTransfer, self).__init__(
             root, modules, exclude_dirs=exclude_dirs, log_dir=log_dir,
@@ -77,15 +128,14 @@ class ImageTransfer(TransferBase):
         self._filter_images()
         self._filter_module_images()
 
-    @staticmethod
-    def get_source_image_path(src_file):
+    def get_source_image_path(self, src_file):
         u"""
         取出当前代码中的所有图片引用路径
 
         :param src_file: 代码文件路径
         :type src_file: str
-        :return: 当前代码中的所有图片引用路径
-        ：:rtype: list
+        :return: 当前代码中的所有图片的引用路径
+        :rtype: list
         """
         images = []
         with open(src_file) as src:
@@ -93,8 +143,10 @@ class ImageTransfer(TransferBase):
             # 替换CR换行符
             if "\n" not in codes:
                 codes = codes.replace("\r", "\n")
-            images.extend(
-                re.findall('(com/fr.+\.(?:png|jpg|gif))', codes))
+            extension_pattern = "|".join(
+                [ext.replace("*.", "") for ext in self.img_pattern])
+            regex = "(com/fr.+\.(?:%s))" % extension_pattern
+            images.extend(re.findall(regex, codes))
         return images
 
     def _filter_images(self):
@@ -130,7 +182,7 @@ class ImageTransfer(TransferBase):
         """
         for module in self.target_modules:
             module_images = []
-            src_path = os.path.join(self.project_root, module, self.__src_dir)
+            src_path = os.path.join(self.project_root, module, self._src_dir)
             img_path = os.path.join(src_path, self.target_dir_pattern)
             # 取出所有图片文件信息
             for root, dirs, files in os.walk(img_path):
@@ -170,7 +222,7 @@ class ImageTransfer(TransferBase):
 
     def transfer(self):
         u"""
-
+        迁移图片文件
         """
         # 复制目标模块引用其他模块的图片
         for img in self._module_dependent_images:
@@ -200,6 +252,8 @@ class ImageTransfer(TransferBase):
                 self.logger.error('Replace "%s" error.' % img)
             else:
                 self.logger.info('"%s" replaced.' % img)
+        # 清理
+        self.clear_target_dirs()
 
     def _change_source_call(self, image, target):
         u"""
@@ -209,6 +263,8 @@ class ImageTransfer(TransferBase):
         :type image: str
         :param target: 当前的图片调用路径
         :type target: str
+        :return: 是否成功替换所有代码中对相关图片的引用
+        :rtype: bool
         """
         success = False
         for src, src_images in self._module_dependencies:
@@ -234,7 +290,7 @@ class ImageTransfer(TransferBase):
 
         :param rel_path: 图片基于src目录的相对路径
         :type rel_path: str
-        :param is_copy: 是否为复制模式，若为``False``，则使用移动模式。默认值为``True``
+        :param is_copy: 是否为复制模式，若为 ``False`` ，则使用移动模式。默认值为 ``True``
         :type is_copy: bool
         :return: 是否成功找到并迁移图片
         :rtype: bool
@@ -254,10 +310,10 @@ class ImageTransfer(TransferBase):
         target_path = os.path.join(self.target_dir,
                                    self.trim_rel_path(img_rel_path))
         # 通过路径搜索并完成图片迁移
-        transferred = False
+        success = False
         for module in os.listdir(self.project_root):
             image_path = os.path.join(
-                self.project_root, module, self.__src_dir, rel_path)
+                self.project_root, module, self._src_dir, rel_path)
             target_dir = os.path.dirname(target_path)
             if os.path.exists(image_path):
                 # 检查目标路径是否存在，不存在则自动创建
@@ -270,12 +326,12 @@ class ImageTransfer(TransferBase):
                 if not is_copy:
                     os.remove(image_path)
                     self.logger.debug("Delete " + t_path)
-                transferred = True
+                success = True
                 break
         # 记录调用路径
         target_call_path = self.generate_call_path(target_path)
         self._transferred_images.append((rel_path, target_call_path))
-        return transferred
+        return success
 
     def _remove_image(self, rel_path):
         u"""
@@ -287,16 +343,16 @@ class ImageTransfer(TransferBase):
         :rtype: bool
         """
         # 通过路径搜索删除未使用的图片
-        removed = False
+        success = False
         for module in self.target_modules:
             image_path = os.path.join(
-                self.project_root, module, self.__src_dir, rel_path)
+                self.project_root, module, self._src_dir, rel_path)
             if os.path.exists(image_path):
                 os.remove(image_path)
                 t_path = image_path.replace(self.project_root, "(project)")
                 self.logger.debug("Delete %s" % t_path)
-                removed = True
-        return removed
+                success = True
+        return success
 
     def generate_call_path(self, path):
         u"""
@@ -304,7 +360,7 @@ class ImageTransfer(TransferBase):
 
         :param path: 图片的路径，可以为相对路径或绝对路径
         :type path: str
-        :return: 调用图片的相对路径，形如``com/fr/web/images/img.jpg``
+        :return: 调用图片的相对路径，形如 ``com/fr/web/images/img.jpg``
         :rtype: str
         """
         rel = self.reformat_path(path).split(self.base_dir_pattern)[1]
@@ -313,21 +369,13 @@ class ImageTransfer(TransferBase):
 
 
 if __name__ == '__main__':
-    PROJECT_ROOT = "E:/temp/project"
-    FS_MODULES = ["fschedule", "fservice", "fmobile"]
-    FS_IMG_DIR_PATTERN = "com/fr/fs"
-    EXCLUDE_IMG_DIRS = ["com/fr/fs/web/images/mobile/cover/"]
-    TARGET_DIR = os.path.join(
-        PROJECT_ROOT, "fservice/src/com/fr/fs/resources/images/")
-    LOG_DIR = "E:/temp"
-
     trans = ImageTransfer(
-        root=PROJECT_ROOT,
-        modules=FS_MODULES,
-        target_base=FS_IMG_DIR_PATTERN,
-        target_excludes=EXCLUDE_IMG_DIRS,
-        target_dir=TARGET_DIR,
-        log_dir=LOG_DIR,
+        root="E:/temp/project",
+        modules=["fschedule", "fservice", "fmobile"],
+        target_base="com/fr/fs",
+        target_excludes=["com/fr/fs/web/images/mobile/cover/"],
+        target_dir="E:/temp/project/fservice/src/com/fr/fs/resources/images/",
+        log_dir="E:/temp",
         log_level=logging.ERROR
     )
     trans.transfer()

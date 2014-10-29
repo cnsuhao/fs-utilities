@@ -24,19 +24,18 @@ class LocaleTransfer(TransferBase):
     u"""
     国际化文本迁移工具
 
-    本工具用于国际化内容的模块间迁移，减少在分离模块后跨模块的国际化调用，减少模块间不必要的依赖。
+    用于国际化内容的模块间迁移，减少在分离模块后跨模块的国际化调用，减少模块间不必要的依赖。
 
-    .. note:: `LocaleTransfer` 是
-        :class:`~fs-utilities.transfer.transfer_base.TransferBase` 的子类。
+    .. note:: `LocaleTransfer` 是 :class:`~FSUtils.transfer.TransferBase` 的子类。
 
     :ivar list locales: 支持的国际化标识符
     :ivar str locale_suffix: 国际化资源文件扩展名
     :ivar list source_pattern: 代码文件类型的通配符列表
     :ivar str original_locale_rel_path: 源国际化资源文件到根目录的相对路径
-    :ivar str original_locale_name: 源国际化资源文件名，如"fr"
+    :ivar str original_locale_name: 源国际化资源文件名，如 ``fr``
 
     :ivar str target_locale_rel_path: 目标模块国际化资源文件到根目录的相对路径
-    :ivar str target_locale_name: 目标模块国际化资源文件名，如"fr"
+    :ivar str target_locale_name: 目标模块国际化资源文件名，如 ``fr``
     :ivar str log_path: 输出信息的位置
 
     :ivar dict all_locales: 缓存的国际化
@@ -68,17 +67,17 @@ class LocaleTransfer(TransferBase):
         u"""
         对国际化文本迁移工具初始化
 
-        :param root: 工程文件的根目录("project"目录)
+        :param root: 工程文件的根目录( ``project`` 目录)
         :type root: str
         :param modules: 迁移国际化内容的目标模块列表
         :type modules: list
         :param target_rel_path: 目标模块国际化资源文件到根目录的相对路径
         :type target_rel_path: str
-        :param target_locale: 目标模块国际化资源文件名，如`fr`
+        :param target_locale: 目标模块国际化资源文件名，如 ``fr``
         :type target_locale: str
         :param work_dir: 输出信息的位置
         :type work_dir: str
-        :param exclude_dirs: "project"下需要排除的子目录
+        :param exclude_dirs: ``project`` 下需要排除的子目录
         :type exclude_dirs: list
         """
         super(LocaleTransfer, self).__init__(
